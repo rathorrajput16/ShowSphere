@@ -17,7 +17,7 @@ const Navbar = () => {
       bg-white/10 backdrop-blur-md border border-white/20 text-white font-medium shadow-lg">
                 <Link to='/'>Home</Link>
                 <Link to='/movies'>Movies</Link>
-                <Link to='/info'>Info</Link>
+                <Link to='/favourite'>Favourite</Link>
                 <Link to='/contactus'>ContactUs</Link>
             </div>
             <div className="flex items-center gap-4">
