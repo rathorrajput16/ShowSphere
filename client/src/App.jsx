@@ -8,11 +8,29 @@ import MovieDetails from './pages/MovieDetails'
 import SeatLayout from './pages/SeatLayout'
 import MyBookings from './pages/MyBookings'
 import Favourite from './pages/Favourite'
-
+import {
+  Toaster
+} from 'react-hot-toast'
 const App = () => {
   const isAdminRoute=useLocation().pathname.startsWith('/admin')
   return (
     <>
+ 
+  <Toaster
+    position='top-center'
+    gutter={12}
+    toastOptions={{
+      duration: 3000,
+      style: {
+        background: '#111827',
+        color: '#fff',
+        border:
+          '1px solid #dc2626',
+        zIndex: 999999,
+      },
+    }}
+  />
+   
       {!isAdminRoute && <Navbar />}
 
 
