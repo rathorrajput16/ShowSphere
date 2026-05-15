@@ -2,17 +2,17 @@ import React, {
   useEffect,
   useState,
 } from 'react'
+
 import {
   dummyBookingData,
-} from '../assets/dummyBookingData'
-import {
-  dummyShowsData,
 } from '../assets/dummyShowsData'
+import timeFormat from '../lib/timeFormat'
 
 const MyBookings = () => {
+
   const currency =
     import.meta.env
-      .VITE_CURRENCY
+      .VITE_CURRENCY || "₹"
 
   const [
     bookings,
@@ -30,9 +30,7 @@ const MyBookings = () => {
         dummyBookingData
       )
 
-      setIsLoading(
-        false
-      )
+      setIsLoading(false)
     }
 
   useEffect(() => {
@@ -48,46 +46,40 @@ const MyBookings = () => {
           My Bookings
         </h1>
 
-        <p className='text-gray-400 mt-3 text-sm md:text-base'>
-          Manage your
-          booked movie
-          tickets
+        <p className='text-white mt-3 text-sm md:text-base'>
+          Manage your booked
+          movie tickets
         </p>
       </div>
 
       {/* Booking Cards */}
       <div className='flex flex-col gap-8'>
+
         {bookings.map(
           (
             item,
             index
           ) => {
-            const movie =
-              dummyShowsData.find(
-                m =>
-                  m._id ===
-                  item
-                    .show
-                    .movieId
-              )
 
-            if (!movie)
-              return null
+            // FIXED:
+            const movie =
+              item.show.movie
 
             return (
               <div
                 key={index}
-                className='bg-zinc-950 border border-red-900 rounded-3xl overflow-hidden hover:border-red-700 transition duration-300'
+                className='bg-zinc-950 border border-red-900 rounded-3xl overflow-hidden hover:border-red-600 transition duration-300 shadow-lg'
               >
+
                 <div className='flex flex-col lg:flex-row'>
 
                   {/* Movie Image */}
                   <img
                     src={
-                      movie.backdrop_path
+                      movie?.backdrop_path
                     }
                     alt={
-                      movie.title
+                      movie?.title
                     }
                     className='w-full lg:w-[340px] h-[260px] object-cover'
                   />
@@ -95,76 +87,84 @@ const MyBookings = () => {
                   {/* Right Content */}
                   <div className='flex-1 p-8 flex flex-col justify-between'>
 
-                    {/* Top */}
+                    {/* Top Section */}
                     <div>
 
                       <div className='flex items-start justify-between flex-wrap gap-4'>
+
                         <div>
-                          <h1 className='text-3xl font-bold'>
+                          <h1 className='text-3xl font-bold text-white'>
                             {
-                              movie.title
+                              movie?.title
                             }
                           </h1>
 
                           <p className='text-gray-400 mt-2'>
-                            {movie.genres
-                              .map(
+                            {movie?.genres
+                              ?.map(
                                 genre =>
                                   genre.name
                               )
-                              .join(
-                                ', '
-                              )}
+                              .join(', ')}
                           </p>
                         </div>
 
+                        {/* Payment Status */}
                         <span
-                          className={`px-4 py-2 rounded-full text-sm font-semibold border ${
-                            item.isPaid
+                          className={`px-4 py-2 rounded-full text-sm font-semibold border ${item.isPaid
                               ? 'bg-green-500/20 text-green-400 border-green-500/40'
                               : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40'
-                          }`}
+                            }`}
                         >
                           {item.isPaid
                             ? 'Paid'
                             : 'Payment Pending'}
                         </span>
+
                       </div>
 
-                      {/* Info */}
+                      {/* Movie Info */}
                       <div className='flex flex-wrap gap-3 mt-6'>
 
+                        {/* Time */}
                         <span className='bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-2 rounded-full text-sm'>
                           🎬{' '}
-                          {
-                            item
-                              .show
-                              .timing
-                          }
+                          {new Date(
+                            item.show.showDateTime
+                          ).toLocaleTimeString(
+                            [],
+                            {
+                              hour: '2-digit',
+                              minute:
+                                '2-digit',
+                            }
+                          )}
                         </span>
 
+                        {/* Date */}
                         <span className='bg-zinc-800 px-4 py-2 rounded-full text-sm'>
                           📅{' '}
-                          {
-                            item
-                              .show
-                              .date
-                          }
+                          {new Date(
+                            item.show.showDateTime
+                          ).toLocaleDateString()}
                         </span>
 
+                        {/* Runtime */}
                         <span className='bg-zinc-800 px-4 py-2 rounded-full text-sm'>
                           ⏱{' '}
                           {
-                            movie.runtime
+                            timeFormat(movie?.runtime)
                           }
                         </span>
 
+                        {/* vote_average */}
                         <span className='bg-zinc-800 text-yellow-400 px-4 py-2 rounded-full text-sm'>
                           ⭐{' '}
                           {
-                            movie.rating
+                            movie?.vote_average
                           }
                         </span>
+
                       </div>
                     </div>
 
@@ -187,7 +187,9 @@ const MyBookings = () => {
 
                         <div className='flex flex-wrap gap-2'>
                           {item.bookedSeats.map(
-                            seat => (
+                            (
+                              seat
+                            ) => (
                               <span
                                 key={
                                   seat
@@ -226,7 +228,9 @@ const MyBookings = () => {
                           </button>
                         )}
                       </div>
+
                     </div>
+
                   </div>
                 </div>
               </div>

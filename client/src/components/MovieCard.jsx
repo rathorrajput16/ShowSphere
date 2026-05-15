@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Star } from 'lucide-react'
+import timeFormat from '../lib/timeFormat'
 
 const MovieCard = ({ movie }) => {
   const navigate = useNavigate()
@@ -28,7 +29,7 @@ const MovieCard = ({ movie }) => {
             .slice(0, 2)
             .map((genre) => genre.name)
             .join(' | ')}{' '}
-          • {movie.runtime}
+          • {timeFormat(movie.runtime)}
         </p>
 
         <div className='flex items-center justify-between'>
@@ -44,7 +45,7 @@ const MovieCard = ({ movie }) => {
 
           <div className='flex items-center gap-1 text-yellow-400'>
             <Star size={18} fill='currentColor' />
-            <p className='text-white'>{movie.rating}</p>
+            <p className='text-white'>{movie.vote_average}</p>
           </div>
         </div>
       </div>

@@ -9,10 +9,15 @@ import {
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
+import dateFormat from '../lib/dateFormat'
+import timeFormat from '../lib/timeFormat'
+import isoTimeFormat from '../lib/isoTimeFormat'
+
 const DateSelect = ({
   dateTime,
   id,
 }) => {
+
   const navigate =
     useNavigate()
 
@@ -42,6 +47,7 @@ const DateSelect = ({
             'left'
               ? -250
               : 250,
+
           behavior:
             'smooth',
         }
@@ -50,40 +56,39 @@ const DateSelect = ({
   }
 
   const onBookHandler =
-  () => {
-    if (
-      selectedDate ===
-      null
-    ) {
-      return toast.error(
-        'Please select a date'
+    () => {
+
+      if (
+        !selectedDate
+      ) {
+        return toast.error(
+          'Please select a date'
+        )
+      }
+
+      if (
+        !selectedTime
+      ) {
+        return toast.error(
+          'Please select a time'
+        )
+      }
+
+      navigate(
+        `/seat/${id}/${selectedTime.showId}?time=${selectedTime.time}`
+      )
+
+      window.scrollTo(
+        0,
+        0
       )
     }
-
-    if (
-      selectedTime ===
-      null
-    ) {
-      return toast.error(
-        'Please select a time'
-      )
-    }
-
-    navigate(
-  `/seat/${id}/${selectedDate}?time=${selectedTime}`
-)
-
-    window.scrollTo(
-      0,
-      0
-    )
-  }
 
   return (
     <div
-  id='dateSelect'
-  className='pt-32 max-w-7xl mx-auto scroll-mt-32'
->
+      id='dateSelect'
+      className='pt-32 max-w-7xl mx-auto scroll-mt-32'
+    >
       <div className='bg-[#2a0d14] border border-red-900 rounded-3xl p-6'>
 
         {/* Heading */}
@@ -91,10 +96,10 @@ const DateSelect = ({
           Choose Date
         </p>
 
-        {/* Date Scroll */}
+        {/* Date Slider */}
         <div className='flex items-center gap-4'>
 
-          {/* Left Arrow */}
+          {/* Left */}
           <button
             onClick={() =>
               scroll(
@@ -103,7 +108,9 @@ const DateSelect = ({
             }
             className='text-white hover:text-red-500 transition'
           >
-            <ChevronLeft size={28} />
+            <ChevronLeft
+              size={28}
+            />
           </button>
 
           {/* Dates */}
@@ -113,6 +120,7 @@ const DateSelect = ({
             }
             className='flex gap-4 overflow-x-auto scroll-smooth flex-1 pb-2 [&::-webkit-scrollbar]:hidden'
           >
+
             {Object.keys(
               dateTime
             ).map(
@@ -128,15 +136,14 @@ const DateSelect = ({
                       date
                     )
 
-                    // reset time when changing date
                     setSelectedTime(
                       null
                     )
                   }}
-                  className={`min-w-[70px] h-[70px]
+                  className={`min-w-[80px] h-[80px]
                   rounded-2xl border
                   flex flex-col items-center justify-center
-                  transition duration-300 outline-none
+                  transition duration-300
                   ${
                     selectedDate ===
                     date
@@ -145,24 +152,21 @@ const DateSelect = ({
                   }`}
                 >
                   <span className='text-xs'>
-                    {new Date(
+                    {dateFormat(
                       date
-                    ).toLocaleDateString(
-                      'en-US',
-                      {
-                        weekday:
-                          'short',
-                      }
-                    )}
+                    )
+                      .split(
+                        ' '
+                      )[0]}
                   </span>
 
-                  <span className='font-bold text-lg'>
+                  <span className='font-bold text-xl'>
                     {new Date(
                       date
                     ).getDate()}
                   </span>
 
-                  <span className='text-[10px]'>
+                  <span className='text-xs'>
                     {new Date(
                       date
                     ).toLocaleDateString(
@@ -176,9 +180,10 @@ const DateSelect = ({
                 </button>
               )
             )}
+
           </div>
 
-          {/* Right Arrow */}
+          {/* Right */}
           <button
             onClick={() =>
               scroll(
@@ -187,60 +192,71 @@ const DateSelect = ({
             }
             className='text-white hover:text-red-500 transition'
           >
-            <ChevronRight size={28} />
+            <ChevronRight
+              size={28}
+            />
           </button>
+
         </div>
 
         {/* Time Slots */}
         {selectedDate && (
           <div className='mt-8'>
+
             <p className='text-lg font-medium mb-4 text-white'>
               Available Timings
             </p>
 
             <div className='flex flex-wrap gap-4'>
+
               {dateTime[
                 selectedDate
               ]?.map(
                 (
-                  time,
-                  index
+                  show
                 ) => (
+
                   <button
                     key={
-                      index
+                      show.showId
                     }
                     onClick={() =>
                       setSelectedTime(
-                        time
+                        show
                       )
                     }
-                    className={`px-5 py-3 rounded-xl border transition duration-300 ${
-                      selectedTime ===
-                      time
+                    className={`px-5 py-3 rounded-xl border transition duration-300
+                    ${
+                      selectedTime
+                        ?.showId ===
+                      show.showId
                         ? 'bg-red-600 border-red-600 text-white'
                         : 'bg-zinc-900 border-zinc-700 hover:border-red-600 text-white'
                     }`}
                   >
-                    {time}
+                    {isoTimeFormat(
+                      show.time
+                    )}
                   </button>
                 )
               )}
+
             </div>
           </div>
         )}
 
-        {/* Book Button */}
+        {/* Book */}
         <div className='mt-8 flex justify-end'>
           <button
             onClick={
               onBookHandler
             }
-            className='bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-xl transition-all cursor-pointer'
+            className='bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-xl transition cursor-pointer'
           >
             Book Now
           </button>
         </div>
+
       </div>
     </div>
   )
