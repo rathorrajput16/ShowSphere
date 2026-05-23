@@ -119,3 +119,58 @@ export const getShows = async (req, res) => {
         });
     }
 }
+
+
+//API to get single show from the database
+export const getShow = async (req, res) => {
+    try {
+
+        const { movieId } = req.params;
+
+        const shows = await Show.find({
+            movie: movieId,
+            showDateTime: { $gte: new Date() }
+        }).sort({ showDateTime: 1 });
+
+        const movie = await Movie.findById(movieId);
+
+        const dateTime = {};
+
+        shows.forEach(show => {
+
+            const date =
+                show.showDateTime
+                .toISOString()
+                .split('T')[0];
+
+            if (dateTime[date]) {
+
+                dateTime[date].push({
+                    time: show.showDateTime,
+                    showId: show._id
+                });
+
+            } else {
+
+                dateTime[date] = [{
+                    time: show.showDateTime,
+                    showId: show._id
+                }];
+            }
+        });
+
+        res.json({
+            success: true,
+            movie,
+            dateTime
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.json({
+            success: false,
+            message: error.message
+        });
+    }
+};
