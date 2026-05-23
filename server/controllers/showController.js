@@ -86,4 +86,36 @@ export const addShow = async (req, res) =>{
     }
 }
 
-//APi TO get all shos from the database
+//API TO get all shows from the database
+export const getShows = async (req, res) => {
+    try {
+
+        const shows = await Show.find({
+            showDateTime: { $gte: new Date() }
+        })
+        .populate('movie')
+        .sort({ showDateTime: 1 });
+
+        // Remove duplicate movies
+        const uniqueShows = [
+            ...new Map(
+                shows.map(show => [
+                    show.movie._id.toString(),
+                    show.movie
+                ])
+            ).values()
+        ];
+
+        res.json({
+            success: true,
+            shows: uniqueShows
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.json({
+            success: false,
+            message: error.message
+        });
+    }
+}
