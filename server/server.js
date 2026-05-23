@@ -17,7 +17,5 @@ app.use(clerkMiddleware())
 app.get('/',(req,res)=>res.send('server is running'));
 app.use('/api/inngest',serve({client:inngest,functions}))
 app.use('/api/show',showRouter);
-
-
 app.listen(PORT,()=>console.log(`Server running at port ${PORT}`));
 
