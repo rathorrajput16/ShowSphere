@@ -6,6 +6,7 @@ import connectDB from './configs/db.js';
 import { clerkMiddleware } from '@clerk/express'
 import { functions, inngest } from './inngest/index.js';
 import showRouter from './routes/showroutes.js';
+import { addShow } from './controllers/showController.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 await connectDB();

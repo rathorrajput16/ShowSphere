@@ -1,5 +1,7 @@
 import axios from 'axios';
+import Show from '../models/Show.js';
 import Movie from '../models/Movie.js';
+import { inngest } from '../inngest/index.js';
 export const getNowPlayingMovies = async(req, res) => {
  try{
    const {data}=await axios.get('https://api.themoviedb.org/3/movie/now_playing',{
@@ -83,3 +85,5 @@ export const addShow = async (req, res) =>{
         res.json({success: false, message: error.message})
     }
 }
+
+//APi TO get all shos from the database
