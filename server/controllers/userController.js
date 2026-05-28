@@ -1,6 +1,7 @@
 import { clerkClient } from "@clerk/express";
 import Booking from "../models/Booking.js";
-export const createBooking=async(req,res)=>{
+import Movie from "../models/Movie.js";
+export const getUserBookings=async(req,res)=>{
     try{
         const user=req.auth().userId;
         const bookings=await Booking.find({user}).populate({
@@ -42,5 +43,18 @@ export const updateFavorite = async (req, res)=>{
         res.json({ success: false, message: error.message });
     }
 }
+export const getFavorites = async (req, res) =>{
+    try {
+        const user = await clerkClient.users.getUser(req.auth().userId)
+        const favorites = user.privateMetadata.favorites;
 
+        // Getting movies from database
+        const movies = await Movie.find({_id: {$in: favorites}})
+
+        res.json({success: true, movies})
+    } catch (error) {
+        console.error(error.message);
+        res.json({ success: false, message: error.message });
+    }
+}
 
