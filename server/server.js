@@ -19,6 +19,7 @@ app.get('/',(req,res)=>res.send('server is running'));
 app.use('/api/inngest',serve({client:inngest,functions}))
 app.use('/api/show',showRouter);
 app.use('/api/booking',bookingRouter);
+app.use('/api/admin',adminRouter);
 
 app.listen(PORT,()=>console.log(`Server running at port ${PORT}`));
 
