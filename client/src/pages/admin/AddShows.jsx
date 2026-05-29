@@ -5,10 +5,11 @@ import toast from "react-hot-toast";
 import { dummyShowsData } from "../../assets/dummyShowsData";
 import Title from "../../components/admin/Title";
 import timeFormat from "../../lib/timeFormat";
+import { useAppContext } from "../../context/AppContext";
 
 const AddShows = () => {
   const currency = import.meta.env.VITE_CURRENCY;
-
+  const {axios,getToken,user,image_base_url}=useAppContext();
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
 
@@ -23,7 +24,18 @@ const AddShows = () => {
   const timeRef = useRef(null);
 
   const fetchNowPlayingMovies = async () => {
-    setNowPlayingMovies(dummyShowsData);
+    try{
+          const {data}=await axios.get('/api/show/now-playing',{headers:{
+            Authorization:`Bearer ${await getToken()}`
+          }})
+          if(data.success){
+            setNowPlayingMovies(data.movies);
+          }
+          ;
+    }
+    catch(error){
+      console.error("Error fetching movies:", error);
+    }
   };
 
   useEffect(() => {
@@ -157,7 +169,7 @@ const AddShows = () => {
               >
                 <div className="relative">
                   <img
-                    src={movie.poster_path}
+                    src={image_base_url+movie.poster_path}
                     alt={movie.title}
                     className="w-full h-[280px] object-cover"
                   />

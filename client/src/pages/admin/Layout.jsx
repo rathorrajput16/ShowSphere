@@ -2,9 +2,16 @@ import React from 'react'
 import AdminNavbar from '../../components/admin/AdminNavbar'
 import AdminSidebar from '../../components/admin/AdminSidebar'
 import { Outlet } from 'react-router-dom'
-
+import { useAppContext } from '../../context/AppContext'
+import { useEffect } from 'react'
+import { LucideClockFading } from 'lucide-react'
 const Layout = () => {
-  return (
+  const {isAdmin,fetchIsAdmin}=useAppContext();
+
+  useEffect(()=>{
+    fetchIsAdmin();
+  },[])
+  return isAdmin?(
     <div className='min-h-screen bg-[#0f0f0f]'>
 
       {/* Navbar */}
@@ -24,7 +31,7 @@ const Layout = () => {
       </div>
 
     </div>
-  )
+  ):<h1>Loading...</h1>
 }
 
 export default Layout
