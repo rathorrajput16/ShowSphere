@@ -9,14 +9,14 @@ export const isAdmin=async(req,res)=>{
 export const getDashboardData=async(req,res)=>{
   try{
     const bookings=await Booking.find({isPaid:true});
-    const activeShows=await Show.find({showTime:{$gt:new Date()}}).populate("movie");
-     const totalUser = await User.countDocuments();
+    const activeShows=await Show.find({showDateTime:{$gt:new Date()}}).populate("movie");
+     const totalUsers = await User.countDocuments();
 
         const dashboardData = {
             totalBookings: bookings.length,
             totalRevenue: bookings.reduce((acc, booking)=> acc + booking.amount, 0),
             activeShows,
-            totalUser
+            totalUsers
         }
 
         res.json({success: true, dashboardData})

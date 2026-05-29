@@ -86,25 +86,32 @@ export const addShow = async (req, res) =>{
              movie = await Movie.create(movieDetails);
         }
 
-        const showsToCreate = [];
-        showsInput.forEach(show => {
-            const showDate = show.date;
-            show.time.forEach((time)=>{
-                const dateTimeString = `${showDate}T${time}`;
-                showsToCreate.push({
-                    movie: movieId,
-                    showDateTime: new Date(dateTimeString),
-                    showPrice,
-                    occupiedSeats: {}
-                })
-            })
-        });
+       const showsToCreate = [];
 
-        if(showsToCreate.length > 0){
+        showsInput.forEach((show) => {
+            const showDate = show.date;
+
+            show.time.forEach((time) => {
+                const dateTimeString = `${showDate}T${time}`;
+
+                const newShow = new Show({
+                    movie: String(movieId),
+                    showDateTime: new Date(dateTimeString),
+                    showPrice: Number(showPrice),
+                    occupiedSeats: {}
+                });
+
+                showsToCreate.push(newShow);
+            });
+        });
+   
+        console.log(showsToCreate);
+
+        if (showsToCreate.length > 0) {
             await Show.insertMany(showsToCreate);
         }
 
-
+              
          await inngest.send({
             name: "app/show.added",
              data: {movieTitle: movie.title}
@@ -112,9 +119,12 @@ export const addShow = async (req, res) =>{
 
         res.json({success: true, message: 'Show Added successfully.'})
     } catch (error) {
-        console.error(error);
-        res.json({success: false, message: error.message})
-    }
+    console.error(error.response?.data || error);
+    res.json({
+        success: false,
+        message: error.message
+    });
+}
 }
 
 //API TO get all shows from the database

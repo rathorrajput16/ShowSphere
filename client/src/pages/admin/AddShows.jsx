@@ -92,54 +92,38 @@ const AddShows = () => {
       };
     });
   };
+    const handleSubmit = async ()=>{
+        try {
+            setAddingShow(true)
 
-  const handleSubmit = () => {
-    setAddingShow(true);
+            if(!selectedMovie || Object.keys(dateTimeSelection).length === 0 || !showPrice){
+                return toast('Missing required fields');
+            }
 
-    if (!selectedMovie) {
-      toast.error("Please select a movie.");
-      setAddingShow(false);
-      return;
+            const showsInput = Object.entries(dateTimeSelection).map(([date, time])=> ({date, time}));
+
+            const payload = {
+                movieId: selectedMovie,
+                showsInput,
+                showPrice: Number(showPrice)
+            }
+
+            const { data } = await axios.post('/api/show/add', payload, {headers: { Authorization: `Bearer ${await getToken()}` }})
+
+            if(data.success){
+                toast.success(data.message)
+                setSelectedMovie(null)
+                setDateTimeSelection({})
+                setShowPrice("")
+            }else{
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.error("Submission error:", error);
+            toast.error('An error occurred. Please try again.')
+        }
+        setAddingShow(false)
     }
-
-    if (!showPrice || Number(showPrice) <= 0) {
-      toast.error("Please enter a valid ticket price.");
-      setAddingShow(false);
-      return;
-    }
-
-    if (Object.keys(dateTimeSelection).length === 0) {
-      toast.error("Please add at least one show time.");
-      setAddingShow(false);
-      return;
-    }
-
-    const newShows = [];
-
-    Object.entries(dateTimeSelection).forEach(([date, times]) => {
-      times.forEach((time) => {
-        newShows.push({
-          movie_id: selectedMovie,
-          date,
-          time,
-          price: Number(showPrice),
-        });
-      });
-    });
-
-    setTimeout(() => {
-      console.log("Added Shows:", newShows);
-
-      toast.success("Show added successfully!");
-
-      setAddingShow(false);
-      setDateTimeSelection({});
-      setSelectedMovie(null);
-      setSelectedDate("");
-      setSelectedTime("");
-      setShowPrice("");
-    }, 1000);
-  };
 
   return nowPlayingMovies.length > 0 ? (
     <div className="text-white min-h-screen pb-10">
@@ -177,7 +161,7 @@ const AddShows = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
 
                   <div className="absolute bottom-3 left-3 bg-black/80 px-3 py-1 rounded-full text-sm text-yellow-400 font-medium">
-                    ⭐ {movie.vote_average}
+                    ⭐ {movie.vote_average?.toFixed(1)}
                   </div>
 
                   {selectedMovie === movie.id && (
