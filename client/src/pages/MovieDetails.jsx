@@ -2,7 +2,7 @@ import React, {
   useEffect,
   useState,
 } from 'react'
-
+import toast from "react-hot-toast";
 import {
   useNavigate,
   useParams,
@@ -19,41 +19,62 @@ from 'react-player'
 import DateSelect
 from '../components/DateSelect'
 
-import {
-  dummyShowsData,
-  dummyDateTimeData,
-} from '../assets/dummyShowsData'
-
 import isoTimeFormat from '../lib/isoTimeFormat'
 import timeFormat from '../lib/timeFormat'
+import { useAppContext } from '../context/AppContext'
 
 const MovieDetails = () => {
-
+    const {shows, axios, getToken, user, fetchFavoriteMovies, favoriteMovies, image_base_url} = useAppContext()
   const { id } =
     useParams()
-
+const isFavorite = favoriteMovies?.some(
+  movie => movie._id === id
+);
   const navigate =
     useNavigate()
-
+const [dateTime, setDateTime] = useState({})
   const [
     show,
     setShow,
   ] = useState(null)
 
-  useEffect(() => {
+const getShow = async ()=>{
+    try {
+      const { data } = await axios.get(`/api/show/${id}`)
+      if(data.success){
+         setShow(data.movie)
+  setDateTime(data.dateTime)
+      }
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
-    const movie =
-      dummyShowsData.find(
-        movie =>
-          String(
-            movie._id
-          ) ===
-          String(id)
-      )
+  const handleFavorite = async ()=>{
+    try {
+      if(!user) return toast.error("Please login to proceed");
 
-    setShow(movie)
+      const { data } = await axios.post('/api/user/updatefavourite', {movieId: id}, {headers: { Authorization: `Bearer ${await getToken()}` }})
 
-  }, [id])
+      if(data.success){
+  const wasFavorite = isFavorite;
+
+  await fetchFavoriteMovies();
+
+  toast.success(
+    wasFavorite
+      ? "Removed from favorites ❤️"
+      : "Added to favorites ❤️"
+  );
+}
+    } catch (error) {
+      console.log(error)
+    }
+  }
+  
+  useEffect(()=>{
+    getShow()
+  },[id])
 
   if (!show) {
     return (
@@ -62,7 +83,11 @@ const MovieDetails = () => {
       </div>
     )
   }
-
+console.log("movie id:", id);
+console.log("favorites:", favoriteMovies);
+console.log("isFavorite:", favoriteMovies?.includes(id));
+console.log(typeof id);
+console.log(favoriteMovies);
   return (
     <div className='bg-black text-white min-h-screen pt-24 px-6 lg:px-14 relative overflow-hidden'>
 
@@ -77,7 +102,7 @@ const MovieDetails = () => {
         {/* Poster */}
         <img
           src={
-            show.poster_path
+            image_base_url+show.poster_path
           }
           alt={
             show.title
@@ -97,22 +122,21 @@ const MovieDetails = () => {
           </h1>
 
           {/* Rating */}
-          <div className='flex items-center gap-2 text-red-500 mb-4'>
-            <Star
-              size={18}
-              fill='currentColor'
-            />
+          <div className='flex items-center gap-2 mb-4'>
+  <Star
+    size={18}
+    className='text-yellow-400'
+    fill='currentColor'
+  />
 
             <span className='font-medium'>
-              {
-                show.vote_average
-              } User Rating
-            </span>
+  {show.vote_average?.toFixed(1)} 
+</span>
           </div>
 
           {/* Desc */}
           <p className='text-gray-400 leading-7 mb-5'>
-            A cinematic masterpiece with stunning visuals, immersive storytelling and unforgettable performances.
+        {show.overview}
           </p>
 
           {/* Runtime */}
@@ -144,17 +168,16 @@ const MovieDetails = () => {
           {/* Buttons */}
           <div className='flex gap-4'>
 
-            <a
-              href={
-                show.trailer
-                  ?.videoUrl
-              }
-              target='_blank'
-              rel='noopener noreferrer'
-              className='px-5 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 transition'
-            >
-              Watch Trailer
-            </a>
+            {show.trailerKey && (
+  <a
+    href={`https://www.youtube.com/watch?v=${show.trailerKey}`}
+    target='_blank'
+    rel='noopener noreferrer'
+    className='px-5 py-3 rounded-xl bg-zinc-800 hover:bg-red-600 transition duration-300'
+  >
+    Watch Trailer
+  </a>
+)}
 
             <button
               onClick={() => {
@@ -186,39 +209,48 @@ const MovieDetails = () => {
               Buy Tickets
             </button>
 
-            <button>
-              <Heart
-                size={20}
-                className='hover:fill-red-500 transition'
-              />
-            </button>
+            <button
+  onClick={handleFavorite}
+  className='hover:scale-110 transition'
+>
+  <Heart
+  size={24}
+  fill={isFavorite ? "currentColor" : "none"}
+  className={`
+    transition duration-300
+    ${
+      isFavorite
+        ? "text-red-500"
+        : "text-white hover:text-red-500"
+    }
+  `}
+/>
+
+</button>
 
           </div>
         </div>
       </div>
 
       {/* Trailer */}
-      <div className='max-w-7xl mx-auto mt-20'>
+     {show.trailerKey ? (
+  <div className='max-w-7xl mx-auto mt-20'>
+    <h2 className='font-semibold text-2xl mb-8 text-red-500'>
+      Trailer
+    </h2>
 
-        <h2 className='font-semibold text-2xl mb-8 text-red-500'>
-          Trailer
-        </h2>
-
-        <div className='overflow-hidden rounded-3xl border border-zinc-800'>
-
-          <ReactPlayer
-            src={
-              show.trailer
-                .videoUrl
-            }
-            width='100%'
-            height='500px'
-            controls
-          />
-
-        </div>
-      </div>
-
+    <ReactPlayer
+      src={`https://www.youtube.com/watch?v=${show.trailerKey}`}
+      width='100%'
+      height='500px'
+      controls
+    />
+  </div>
+) : (
+  <div className='max-w-7xl mx-auto mt-20 text-center text-gray-400'>
+    Trailer not available
+  </div>
+)}
       {/* Cast */}
       <div className='max-w-7xl mx-auto mt-20'>
 
@@ -239,9 +271,7 @@ const MovieDetails = () => {
               >
 
                 <img
-                  src={
-                    cast.profile_path
-                  }
+                  src={image_base_url + cast.profile_path}
                   alt={
                     cast.name
                   }
@@ -269,13 +299,9 @@ const MovieDetails = () => {
 
       {/* Date Select */}
       <DateSelect
-        dateTime={
-          dummyDateTimeData
-        }
-        id={
-          show._id
-        }
-      />
+  dateTime={dateTime}
+  id={show._id}
+/>
 
     </div>
   )

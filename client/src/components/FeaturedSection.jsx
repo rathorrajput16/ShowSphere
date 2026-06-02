@@ -4,9 +4,11 @@ import { useNavigate } from 'react-router-dom'
 
 import MovieCard from './MovieCard'
 import { dummyShowsData } from '../assets/dummyShowsData'
+import { useAppContext } from '../context/AppContext'
 
 const FeaturedSection = () => {
   const navigate = useNavigate()
+  const {shows}=useAppContext();
 
   return (
     <div className='px-4 md:px-8 lg:px-12 py-12'>
@@ -37,7 +39,7 @@ const FeaturedSection = () => {
           [&::-webkit-scrollbar-thumb]:rounded-full
         '
       >
-        {dummyShowsData.map((movie) => (
+        {shows.map((movie) => (
           <div
             key={movie._id}
             className='min-w-[260px] flex-shrink-0 snap-start hover:scale-105 transition duration-300'

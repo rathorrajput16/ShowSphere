@@ -1,10 +1,11 @@
 import React from 'react'
 import { dummyShowsData } from '../assets/dummyShowsData'
 import MovieCard from '../components/MovieCard'
+import { useAppContext } from '../context/AppContext';
 
 const Favourite = () => {
-
-  return dummyShowsData.length > 0 ? (
+  const {favoriteMovies}=useAppContext();
+  return favoriteMovies.length > 0 ? (
 
    <div className='px-6 md:px-16 lg:px-24 pt-28 pb-10 min-h-screen bg-black text-white'>
 
@@ -26,7 +27,7 @@ const Favourite = () => {
       {/* Movies Grid */}
       <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6'>
 
-        {dummyShowsData.map((movie) => (
+        {favoriteMovies.map((movie) => (
 
           <MovieCard
             key={movie._id}

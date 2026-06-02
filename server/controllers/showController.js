@@ -63,10 +63,13 @@ export const addShow = async (req, res) =>{
                 axios.get(`https://api.themoviedb.org/3/movie/${movieId}/credits`, {
             headers: {Authorization : `Bearer ${process.env.TMDB_API_KEY}`} })
             ]);
-
+            const movieVideosResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}/videos`,{
+                headers: {Authorization: `Bearer ${process.env.TMDB_API_KEY}`}
+                }
+            );
             const movieApiData = movieDetailsResponse.data;
             const movieCreditsData = movieCreditsResponse.data;
-
+            const trailer = movieVideosResponse.data.results.find(v => v.type === "Trailer" && v.site === "YouTube");
              const movieDetails = {
                 _id: movieId,
                 title: movieApiData.title,
@@ -80,6 +83,7 @@ export const addShow = async (req, res) =>{
                 tagline: movieApiData.tagline || "",
                 vote_average: movieApiData.vote_average,
                 runtime: movieApiData.runtime,
+                trailerKey: trailer?.key || null
              }
 
              // Add movie to the database

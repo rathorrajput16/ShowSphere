@@ -134,6 +134,7 @@ const Dashboard = () => {
                 <th className='p-4'>Date</th>
                 <th className='p-4'>Price</th>
                 <th className='p-4'>Booked Seats</th>
+                <th className='p-4'>Earnings</th>
               </tr>
             </thead>
 
@@ -184,11 +185,13 @@ const Dashboard = () => {
 
                   {/* Seats */}
                   <td className='p-4 text-white'>
-                    {
-                      Object.keys(
-                        show.occupiedSeats
-                      ).length
-                    }
+                    {Object.keys(show.occupiedSeats).length}
+                  </td>
+
+                  {/* Earnings */}
+                  <td className='p-4 text-green-400 font-semibold'>
+                    {currency}
+                    {show.showPrice * Object.keys(show.occupiedSeats).length}
                   </td>
 
                 </tr>

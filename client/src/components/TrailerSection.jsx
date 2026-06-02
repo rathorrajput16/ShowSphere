@@ -1,27 +1,32 @@
 import { PlayCircleIcon } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import ReactPlayer from 'react-player'
-
-import { dummyShowsData } from '../assets/dummyShowsData'
+import { useAppContext } from '../context/AppContext'
 
 const TrailerSection = () => {
 
-  
-  const trailers = dummyShowsData.map(
-    (movie) => ({
+  const { shows, image_base_url } = useAppContext()
+
+  const trailers = shows
+    .filter(movie => movie.trailerKey)
+    .map(movie => ({
       id: movie._id,
-      title: movie.trailer.title,
-      image: movie.trailer.image,
-      videoUrl: movie.trailer.videoUrl,
-    })
-  )
+      title: movie.title,
+      image: image_base_url + movie.backdrop_path,
+      videoUrl: `https://www.youtube.com/watch?v=${movie.trailerKey}`
+    }))
 
-  const [currentTrailer, setCurrentTrailer] =
-    useState(trailers[0])
+  const [currentTrailer, setCurrentTrailer] = useState(null)
 
+  useEffect(() => {
+    if (trailers.length > 0) {
+      setCurrentTrailer(trailers[0])
+    }
+  }, [shows])
+  console.log(shows);
   return (
     <div className='px-6 md:px-16 lg:px-24 py-10 bg-black text-white'>
-      
+       
       {/* Heading */}
       <div className='mb-8'>
         <h2 className='text-3xl md:text-4xl font-bold'>
@@ -35,14 +40,24 @@ const TrailerSection = () => {
 
       {/* Main Trailer */}
       <div className='overflow-hidden rounded-3xl mb-8 bg-zinc-900 border border-zinc-800'>
-        <ReactPlayer
-  key={currentTrailer.id}
-  src={currentTrailer.videoUrl}
-  width="100%"
-  height="500px"
-  controls
-  playing={false}
-/>
+
+        {currentTrailer ? (
+          <ReactPlayer
+            key={currentTrailer.id}
+            src={currentTrailer.videoUrl}
+            width="100%"
+            height="500px"
+            controls
+            playing={false}
+          />
+        ) : (
+          <div className='h-[500px] flex items-center justify-center'>
+            <p className='text-gray-400'>
+              No trailers available
+            </p>
+          </div>
+        )}
+
       </div>
 
       {/* Trailer Scroll */}
@@ -52,16 +67,15 @@ const TrailerSection = () => {
           scroll-smooth pb-3
           [&::-webkit-scrollbar]:h-2
           [&::-webkit-scrollbar-track]:bg-black
-          [&::-webkit-scrollbar-thumb]:bg-black
+          [&::-webkit-scrollbar-thumb]:bg-zinc-700
           [&::-webkit-scrollbar-thumb]:rounded-full
         '
       >
+
         {trailers.map((trailer) => (
           <div
             key={trailer.id}
-            onClick={() =>
-              setCurrentTrailer(trailer)
-            }
+            onClick={() => setCurrentTrailer(trailer)}
             className='
               relative min-w-[280px]
               cursor-pointer group
@@ -70,6 +84,7 @@ const TrailerSection = () => {
               hover:scale-105 transition duration-300
             '
           >
+
             {/* Thumbnail */}
             <img
               src={trailer.image}
@@ -83,8 +98,7 @@ const TrailerSection = () => {
             </div>
 
             {/* Active Trailer Border */}
-            {currentTrailer.id ===
-              trailer.id && (
+            {currentTrailer?.id === trailer.id && (
               <div className='absolute inset-0 border-4 border-red-600 rounded-2xl' />
             )}
 
@@ -92,9 +106,12 @@ const TrailerSection = () => {
             <p className='absolute bottom-3 left-3 text-white font-semibold text-sm bg-black/60 px-3 py-1 rounded-md'>
               {trailer.title}
             </p>
+
           </div>
         ))}
+
       </div>
+
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { Autoplay, Pagination } from "swiper/modules"
 import "swiper/css"
 import "swiper/css/pagination"
 import { useNavigate } from "react-router-dom"
+import { useAppContext } from "../context/AppContext"
 
 const movies = [
   {
@@ -38,6 +39,7 @@ const movies = [
 
 const HeroSection = () => {
   const navigate = useNavigate()
+  const {shows, image_base_url}=useAppContext();
   return (
     <div className="w-full px-4 md:px-8 lg:px-12 mt-6">
 
@@ -53,12 +55,12 @@ const HeroSection = () => {
         loop={true}
         className="rounded-3xl overflow-hidden"
       >
-        {movies.map((movie, index) => (
+        {shows.map((movie, index) => (
           <SwiperSlide key={index}>
             <div
               className="h-[70vh] w-full bg-cover bg-center relative flex items-end"
               style={{
-                backgroundImage: `url(${movie.image})`,
+                backgroundImage: `url(${movie.backdrop_path ? image_base_url+movie.backdrop_path : 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1974&auto=format&fit=crop'})`,
               }}
             >
 
@@ -69,7 +71,7 @@ const HeroSection = () => {
               <div className="relative z-10 p-6 md:p-10 max-w-2xl">
 
                 <p className="text-red-500 font-semibold mb-2">
-                  {movie.genre} • ⭐ {movie.vote_average}
+                  {movie.genres?.map(g => g.name).join(", ")} • ⭐  {movie.vote_average?.toFixed(1)}
                 </p>
 
                 <h2 className="text-white text-4xl md:text-6xl font-bold mb-4">
@@ -77,7 +79,7 @@ const HeroSection = () => {
                 </h2>
 
                 <p className="text-gray-300 text-sm md:text-lg mb-6">
-                  {movie.description}
+                  {movie.overview}
                 </p>
 
                 <div className="flex gap-4">

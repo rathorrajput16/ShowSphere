@@ -2,10 +2,11 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Star } from 'lucide-react'
 import timeFormat from '../lib/timeFormat'
+import { useAppContext } from '../context/AppContext'
 
 const MovieCard = ({ movie }) => {
   const navigate = useNavigate()
-
+   const {image_base_url}=useAppContext();
   return (
     <div className='bg-zinc-900 rounded-2xl overflow-hidden shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer'>
       <img
@@ -13,7 +14,7 @@ const MovieCard = ({ movie }) => {
           navigate(`/movies/${movie._id}`)
           scrollTo(0, 0)
         }}
-        src={movie.backdrop_path}
+        src={image_base_url+movie.backdrop_path}
         alt={movie.title}
         className='h-64 w-full object-cover'
       />
@@ -45,7 +46,7 @@ const MovieCard = ({ movie }) => {
 
           <div className='flex items-center gap-1 text-yellow-400'>
             <Star size={18} fill='currentColor' />
-            <p className='text-white'>{movie.vote_average}</p>
+            <p className='text-white'>{movie.vote_average?.toFixed(1)}</p>
           </div>
         </div>
       </div>
