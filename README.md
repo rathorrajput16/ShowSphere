@@ -469,7 +469,6 @@ ShowSphere/
 │       │       ├── Layout.jsx        # Admin shell layout
 │       │       ├── Dashboard.jsx     # Stats overview cards
 │       │       ├── AddShows.jsx      # Schedule new shows (TMDB + multi-slot)
-│       │       ├── ListShows.jsx     # All active shows
 │       │       └── ListBookings.jsx  # All bookings (admin view)
 │       │
 │       ├── context/
@@ -499,7 +498,7 @@ ShowSphere/
     │   └── Booking.js
     ├── routes/
     │   ├── showroutes.js
-    │   ├── boookingRoutes.js
+    │   ├── bookingRoutes.js
     │   ├── adminRoutes.js
     │   └── userRoutes.js
     └── server.js                     # App entry point

@@ -108,8 +108,7 @@ export const addShow = async (req, res) =>{
                 showsToCreate.push(newShow);
             });
         });
-   
-        console.log(showsToCreate);
+
 
         if (showsToCreate.length > 0) {
             await Show.insertMany(showsToCreate);

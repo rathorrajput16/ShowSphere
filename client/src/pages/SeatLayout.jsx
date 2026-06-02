@@ -85,11 +85,7 @@ const proceedCheckout = async () => {
   try {
 
     const token = await getToken();
-console.log({
-  movieId,
-  showId,
-  selectedSeats
-});
+
     const { data } = await axios.post(
       "/api/booking/create-order",
       {
@@ -102,7 +98,7 @@ console.log({
         }
       }
     );
-  console.log(data);
+
     if (!data.success) {
       return toast.error(data.message);
     }
@@ -124,8 +120,7 @@ const bookingId = data.bookingId;
 
   handler: async function (response) {
 
-    console.log("HANDLER HIT");
-    console.log(response);
+ 
 
     try {
 
@@ -150,8 +145,7 @@ const bookingId = data.bookingId;
   }
 );
 
-      console.log("VERIFY RESPONSE");
-      console.log(verifyRes.data);
+      
 
       if (verifyRes.data.success) {
         toast.success("Booking Successful");
@@ -162,7 +156,7 @@ const bookingId = data.bookingId;
 
     } catch (error) {
 
-      console.log("VERIFY ERROR");
+
       console.log(error);
       console.log(error.response?.data);
 

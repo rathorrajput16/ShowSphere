@@ -106,7 +106,7 @@ const handlePayNow = async (booking) => {
         if (verifyRes.data.success) {
           toast.success("Payment Successful");
           await getMyBookings(); 
-          console.log("Payment verified successfully");
+
             navigate("/my-bookings");
         }
       }

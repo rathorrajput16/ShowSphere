@@ -23,7 +23,7 @@ const TrailerSection = () => {
       setCurrentTrailer(trailers[0])
     }
   }, [shows])
-  console.log(shows);
+ 
   return (
     <div className='px-6 md:px-16 lg:px-24 py-10 bg-black text-white'>
        

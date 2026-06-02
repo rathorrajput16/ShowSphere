@@ -7,7 +7,7 @@ import { clerkMiddleware } from '@clerk/express'
 import { functions, inngest } from './inngest/index.js';
 import showRouter from './routes/showroutes.js';
 import { addShow } from './controllers/showController.js';
-import bookingRouter from './routes/boookingRoutes.js';
+import bookingRouter from './routes/bookingRoutes.js';
 import adminRouter from './routes/adminRoutes.js';
 import userRouter from './routes/userRoutes.js';
 const app = express();

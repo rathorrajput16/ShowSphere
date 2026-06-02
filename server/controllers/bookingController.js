@@ -1,7 +1,7 @@
 import Show from "../models/Show.js";
 import Booking from "../models/Booking.js";
 import Razorpay from "razorpay";
-import crypto from "crypto";4
+import crypto from "crypto";
 import { inngest } from "../inngest/index.js";
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -11,7 +11,7 @@ const razorpay = new Razorpay({
 const checkSeatsAvailability=async(showId,selectedSeats)=>{
     try{
        const showData=await Show.findById(showId)
-           console.log("DB occupiedSeats =", showData.occupiedSeats);
+         
 
        if(!showData)return false;
        const occupiedSeats=showData.occupiedSeats;

@@ -83,11 +83,7 @@ const getShow = async ()=>{
       </div>
     )
   }
-console.log("movie id:", id);
-console.log("favorites:", favoriteMovies);
-console.log("isFavorite:", favoriteMovies?.includes(id));
-console.log(typeof id);
-console.log(favoriteMovies);
+
   return (
     <div className='bg-black text-white min-h-screen pt-24 px-6 lg:px-14 relative overflow-hidden'>
 
