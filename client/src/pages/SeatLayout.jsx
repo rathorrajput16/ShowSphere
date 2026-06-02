@@ -7,7 +7,7 @@ import { useAppContext } from '../context/AppContext'
 
 const SeatLayout = () => {
   const navigate = useNavigate()
-  let { id, showId } = useParams()
+  let { movieId, showId } = useParams()
   const [searchParams] = useSearchParams()
   const time = isoTimeFormat(searchParams.get('time') )
   const showDate = new Date(searchParams.get('time'));
@@ -43,7 +43,7 @@ const datePart = showDate.toLocaleDateString();
     '2-2026-05-17-1:00 PM':  ['C4', 'C5', 'E7', 'J2'],
   }
 
-  const showKey = `${id}-${date}-${time}`
+  const showKey = `${movieId}-${date}-${time}`
 const getOccupiedSeats = async () => {
   try {
     const { data } = await axios.get(
@@ -51,9 +51,7 @@ const getOccupiedSeats = async () => {
     );
 
     if (data.success) {
-      setOccupiedSeats(
-        Object.keys(data.occupiedSeats || {})
-      );
+      setOccupiedSeats(data.occupiedSeats || []);
     } else {
       toast.error(data.message);
     }
@@ -76,12 +74,114 @@ useEffect(() => {
     )
   }
 
-  const proceedCheckout = () => {
-    if (!time) return toast.error('Please select a time')
-    if (!selectedSeats.length) return toast.error('Please select seats')
-    toast.success('Seats selected successfully')
-    navigate('/checkout')
+const proceedCheckout = async () => {
+
+  if (!time)
+    return toast.error("Please select a time");
+
+  if (!selectedSeats.length)
+    return toast.error("Please select seats");
+
+  try {
+
+    const token = await getToken();
+console.log({
+  movieId,
+  showId,
+  selectedSeats
+});
+    const { data } = await axios.post(
+      "/api/booking/create-order",
+      {
+        showId,
+        selectedSeats
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+  console.log(data);
+    if (!data.success) {
+      return toast.error(data.message);
+    }
+
+    const order = data.order;
+
+  const options = {
+  key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+
+  amount: order.amount,
+
+  currency: order.currency,
+
+  name: "ShowSphere",
+
+  description: "Movie Ticket Booking",
+
+  order_id: order.id,
+
+  handler: async function (response) {
+
+    console.log("HANDLER HIT");
+    console.log(response);
+
+    try {
+
+      const verifyRes = await axios.post(
+        "/api/booking/verify-payment",
+        {
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+          showId,
+          selectedSeats
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      console.log("VERIFY RESPONSE");
+      console.log(verifyRes.data);
+
+      if (verifyRes.data.success) {
+        toast.success("Booking Successful");
+        navigate("/my-bookings");
+      } else {
+        toast.error(verifyRes.data.message);
+      }
+
+    } catch (error) {
+
+      console.log("VERIFY ERROR");
+      console.log(error);
+      console.log(error.response?.data);
+
+      toast.error(
+        error.response?.data?.message ||
+        error.message
+      );
+    }
   }
+};
+
+const razorpay = new window.Razorpay(options);
+
+razorpay.open();
+
+} catch (error) {
+
+  console.log(error);
+
+  toast.error(error.message);
+
+}
+};
+
 
   const renderRow = (row, count = 9) => {
     const aisleAfter = Math.floor(count / 2) - 1 // gap after seat 4
@@ -195,7 +295,7 @@ useEffect(() => {
             Show Details
           </h2>
 
-          {[{ label: 'Movie ID', value: id || '—' }, { label: 'Date', value: date || '—' }].map(({ label, value }) => (
+          {[ { label: 'Date', value: date || '—' }].map(({ label, value }) => (
             <div key={label} style={{ marginBottom: 18 }}>
               <p style={{ fontSize: 12, color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 3 }}>{label}</p>
               <p style={{ fontSize: 14, fontWeight: 600, color: '#e2e8f0' }}>{value}</p>

@@ -47,7 +47,7 @@ const App = () => {
         <Route path='/' element={<Home/>} />
         <Route path='/movies' element={<Movies/>} />
         <Route path='/movies/:id' element={<MovieDetails/>} />
-        <Route path='/seat/:id/:date' element={<SeatLayout/>} />
+        <Route path='/seat/:movieId/:showId' element={<SeatLayout/>} />
          <Route path='/my-bookings' element={<MyBookings/>} />
           <Route path='/favourite' element={<Favourite/>} />
           <Route path='/admin/*' element={user ? <Layout/> : (
