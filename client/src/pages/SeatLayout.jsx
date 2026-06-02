@@ -1,16 +1,32 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
+import isoTimeFormat from '../lib/isoTimeFormat'
+import { useAppContext } from '../context/AppContext'
 
 const SeatLayout = () => {
   const navigate = useNavigate()
-  const { id, date } = useParams()
+  let { id, showId } = useParams()
   const [searchParams] = useSearchParams()
-  const time = searchParams.get('time')
+  const time = isoTimeFormat(searchParams.get('time') )
+  const showDate = new Date(searchParams.get('time'));
+  const date=showDate.toLocaleDateString();
+   const{axios,getToken,user}=useAppContext();
   const [selectedSeats, setSelectedSeats] = useState([])
-
-
+const [occupiedSeats, setOccupiedSeats] = useState([]);
+const datePart = showDate.toLocaleDateString();
+// const getShow=async()=>{
+//  try{
+//    const {data}=await axios.get(`/api/show/${id}`)
+//    if(data.success){
+    
+//   }
+//  }
+//  catch(error){
+//   console.error(error)
+//  }
+// }
  const groupRows = [
   ['A', 'B'],
   ['C', 'D'],
@@ -28,8 +44,28 @@ const SeatLayout = () => {
   }
 
   const showKey = `${id}-${date}-${time}`
-  const occupiedSeats = useMemo(() => dummyBookedSeats[showKey] || [], [showKey])
+const getOccupiedSeats = async () => {
+  try {
+    const { data } = await axios.get(
+      `/api/booking/seats/${showId}`
+    );
 
+    if (data.success) {
+      setOccupiedSeats(
+        Object.keys(data.occupiedSeats || {})
+      );
+    } else {
+      toast.error(data.message);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
+useEffect(() => {
+  if (showId) {
+    getOccupiedSeats();
+  }
+}, [showId]);
   const handleSeatClick = (seatId) => {
     if (!time) return toast.error('Please select a time first')
     if (occupiedSeats.includes(seatId)) return toast.error('Seat already booked')
@@ -46,7 +82,6 @@ const SeatLayout = () => {
     toast.success('Seats selected successfully')
     navigate('/checkout')
   }
-
 
   const renderRow = (row, count = 9) => {
     const aisleAfter = Math.floor(count / 2) - 1 // gap after seat 4

@@ -16,7 +16,7 @@ import Layout from './pages/admin/Layout'
 import Dashboard from './pages/admin/Dashboard'
 import ListBookings from './pages/admin/ListBookings'
 
-import ListShows from './pages/admin/ListSHows'
+import ListShows from './pages/admin/ListShows'
 import AddShows from './pages/admin/AddShows'
 import { SignIn } from '@clerk/clerk-react'
 const App = () => {

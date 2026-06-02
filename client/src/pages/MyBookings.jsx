@@ -3,16 +3,16 @@ import React, {
   useState,
 } from 'react'
 
-import {
-  dummyBookingData,
-} from '../assets/dummyShowsData'
+import {dummyBookingData} from '../assets/dummyShowsData'
 import timeFormat from '../lib/timeFormat'
+import { useAppContext } from '../context/AppContext'
 
 const MyBookings = () => {
 
   const currency =
     import.meta.env
       .VITE_CURRENCY || "₹"
+const {shows, axios, getToken, user, fetchFavoriteMovies, favoriteMovies, image_base_url} = useAppContext();
 
   const [
     bookings,
@@ -26,16 +26,26 @@ const MyBookings = () => {
 
   const getMyBookings =
     async () => {
-      setBookings(
-        dummyBookingData
-      )
+      try{
+       const {data}=await axios.get('api/user/bookings', {headers: { Authorization: `Bearer ${await getToken()}` }
+       })
+       if(data.success){
+        setBookings(data.bookings)
+       }
+      }
+      catch(error){
+        console.error(error)
+      }
 
       setIsLoading(false)
     }
 
   useEffect(() => {
-    getMyBookings()
-  }, [])
+    if(user){
+       getMyBookings()
+    }
+    
+  }, [user])
 
   return !isLoading ? (
     <div className='min-h-screen bg-black text-white px-6 md:px-16 lg:px-24 pt-28 pb-12'>
@@ -46,10 +56,7 @@ const MyBookings = () => {
           My Bookings
         </h1>
 
-        <p className='text-white mt-3 text-sm md:text-base'>
-          Manage your booked
-          movie tickets
-        </p>
+        
       </div>
 
       {/* Booking Cards */}
@@ -76,7 +83,7 @@ const MyBookings = () => {
                   {/* Movie Image */}
                   <img
                     src={
-                      movie?.backdrop_path
+                     image_base_url+ movie?.backdrop_path
                     }
                     alt={
                       movie?.title
