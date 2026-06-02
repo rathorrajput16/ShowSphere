@@ -158,10 +158,10 @@ const {axios,getToken,user,image_base_url}=useAppContext();
 
                         <img
                           src={
-                            item
+                            image_base_url+item
                               .show
                               .movie
-                              .poster_path
+                              .backdrop_path
                           }
                           alt=''
                           className='w-16 h-20 rounded-lg object-cover'

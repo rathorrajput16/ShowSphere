@@ -6,6 +6,8 @@ import React, {
 import {dummyBookingData} from '../assets/dummyShowsData'
 import timeFormat from '../lib/timeFormat'
 import { useAppContext } from '../context/AppContext'
+import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 
 const MyBookings = () => {
 
@@ -13,7 +15,7 @@ const MyBookings = () => {
     import.meta.env
       .VITE_CURRENCY || "₹"
 const {shows, axios, getToken, user, fetchFavoriteMovies, favoriteMovies, image_base_url} = useAppContext();
-
+const navigate = useNavigate();
   const [
     bookings,
     setBookings,
@@ -104,6 +106,7 @@ const handlePayNow = async (booking) => {
         if (verifyRes.data.success) {
           toast.success("Payment Successful");
           await getMyBookings(); 
+          console.log("Payment verified successfully");
             navigate("/my-bookings");
         }
       }
