@@ -108,7 +108,7 @@ console.log({
     }
 
     const order = data.order;
-
+const bookingId = data.bookingId;
   const options = {
   key: import.meta.env.VITE_RAZORPAY_KEY_ID,
 
@@ -130,20 +130,25 @@ console.log({
     try {
 
       const verifyRes = await axios.post(
-        "/api/booking/verify-payment",
-        {
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature: response.razorpay_signature,
-          showId,
-          selectedSeats
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+  "/api/booking/verify-payment",
+  {
+    bookingId,
+
+    razorpay_order_id:
+      response.razorpay_order_id,
+
+    razorpay_payment_id:
+      response.razorpay_payment_id,
+
+    razorpay_signature:
+      response.razorpay_signature
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);
 
       console.log("VERIFY RESPONSE");
       console.log(verifyRes.data);

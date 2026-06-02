@@ -1,10 +1,11 @@
 import express from 'express';
-import { createBooking, createOrder, getOccupiedSeats, verifyPayment } from '../controllers/bookingController.js';
+import { createOrder, getOccupiedSeats, payExistingBooking, verifyPayment } from '../controllers/bookingController.js';
 
 
 const bookingRouter=express.Router();
-bookingRouter.post('/create',createBooking);
+
 bookingRouter.get('/seats/:showId',getOccupiedSeats);
 bookingRouter.post("/create-order", createOrder);
 bookingRouter.post("/verify-payment", verifyPayment );
+bookingRouter.post("/pay-existing-booking", payExistingBooking );
 export default bookingRouter;

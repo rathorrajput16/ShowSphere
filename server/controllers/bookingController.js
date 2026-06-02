@@ -1,7 +1,8 @@
 import Show from "../models/Show.js";
 import Booking from "../models/Booking.js";
 import Razorpay from "razorpay";
-import crypto from "crypto";
+import crypto from "crypto";4
+import { inngest } from "../inngest/index.js";
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET
@@ -22,68 +23,102 @@ const checkSeatsAvailability=async(showId,selectedSeats)=>{
       return false;
     }
 }
-export const createOrder = async (req,res)=>{
-    try{
-        console.log(req.body);
-        const {showId,selectedSeats}=req.body;
-         
-        const isAvailable =
-            await checkSeatsAvailability(
-                showId,
-                selectedSeats
-            );
+export const createOrder = async (req, res) => {
+  try {
 
-        if(!isAvailable){
-            return res.json({
-                success:false,
-                message:"Selected seats not available"
-            });
-        }
+    const { showId, selectedSeats } = req.body;
+    const { userId } = req.auth();
 
-        const showData =
-            await Show.findById(showId);
+    const isAvailable =
+      await checkSeatsAvailability(
+        showId,
+        selectedSeats
+      );
 
-        const amount =
-            showData.showPrice *
-            selectedSeats.length;
-         console.log("amount =", amount);
-         console.log(process.env.RAZORPAY_KEY_ID);
-console.log(process.env.RAZORPAY_KEY_SECRET ? "SECRET FOUND" : "NO SECRET");
-        const order =
-            await razorpay.orders.create({
-                amount: amount * 100,
-                currency:"INR",
-                receipt:`receipt_${Date.now()}`
-            });
-            console.log("order =", order);
+    if (!isAvailable) {
+      return res.json({
+        success: false,
+        message: "Selected seats not available"
+      });
+    }
 
-        res.json({
-            success:true,
-            order
-        });
+    const showData =
+      await Show.findById(showId);
 
-    }catch(error){
-    console.log("RAZORPAY ERROR:");
+    if (!showData) {
+      return res.json({
+        success: false,
+        message: "Show not found"
+      });
+    }
+
+    const amount =
+      showData.showPrice *
+      selectedSeats.length;
+
+    // Create unpaid booking
+    const booking = await Booking.create({
+      user: userId,
+      show: showId,
+      amount,
+      bookedSeats: selectedSeats,
+      isPaid: false
+    });
+
+    // Lock seats immediately
+    selectedSeats.forEach((seat) => {
+      showData.occupiedSeats[seat] = userId;
+    });
+
+    showData.markModified("occupiedSeats");
+
+    await showData.save();
+
+    // Trigger Inngest timer
+    await inngest.send({
+      name: "app/checkpayment",
+      data: {
+        bookingId: booking._id
+      }
+    });
+
+    // Create Razorpay order
+    const order =
+      await razorpay.orders.create({
+        amount: amount * 100,
+        currency: "INR",
+        receipt: `receipt_${booking._id}`
+      });
+
+    // Save order id
+    booking.razorpayOrderId = order.id;
+    await booking.save();
+
+    return res.json({
+      success: true,
+      order,
+      bookingId: booking._id
+    });
+
+  } catch (error) {
+
     console.log(error);
 
-    res.json({
-        success:false,
-        message:error.message
+    return res.json({
+      success: false,
+      message: error.message
     });
-}
-}
+
+  }
+};
 export const verifyPayment = async (req,res)=>{
     try{
-        console.log("VERIFY PAYMENT HIT");
-        console.log(req.body);
-        const {userId}=req.auth();
 
         const {
+            bookingId,
             razorpay_order_id,
             razorpay_payment_id,
-            razorpay_signature,
-            showId,
-            selectedSeats
+            razorpay_signature
         } = req.body;
 
         const generatedSignature =
@@ -109,89 +144,88 @@ export const verifyPayment = async (req,res)=>{
             });
         }
 
-        const isAvailable =
-            await checkSeatsAvailability(
-                showId,
-                selectedSeats
+        const booking =
+            await Booking.findById(
+                bookingId
             );
 
-        if(!isAvailable){
+        if(!booking){
             return res.json({
                 success:false,
-                message:"Seats already booked"
+                message:"Booking not found"
             });
         }
 
-        const showData =
-            await Show.findById(showId)
-            .populate("movie");
+        booking.isPaid = true;
 
-        await Booking.create({
-            user:userId,
-            show:showId,
-            amount:
-                showData.showPrice *
-                selectedSeats.length,
-            bookedSeats:selectedSeats,
-            paymentId:razorpay_payment_id,
-             isPaid: true
-        });
+        booking.paymentId =
+            razorpay_payment_id;
 
-        selectedSeats.forEach((seat)=>{
-            showData.occupiedSeats[seat]=userId;
-        });
+        await booking.save();
 
-        showData.markModified(
-            "occupiedSeats"
-        );
-
-        await showData.save();
-
-        res.json({
+        return res.json({
             success:true,
             message:"Booking successful"
         });
 
     }catch(error){
 
-        res.json({
+        return res.json({
             success:false,
             message:error.message
         });
 
     }
 }
-export const createBooking=async(req,res)=>{
-    try{
-        const {userId}=req.auth();
-        const {showId,selectedSeats}=req.body;
-        const {origin}=req.headers;
+export const payExistingBooking = async (req, res) => {
+  try {
 
-        const isAvailable=await checkSeatsAvailability(showId,selectedSeats);
-        if(!isAvailable){
-            return res.json({success:false,message:"Selected seats are not available"});
-        }   
-         const showData=await Show.findById(showId).populate("movie");
-         const booking=await Booking.create({
-            user:userId,
-            show:showId,
-            amount:showData.showPrice*selectedSeats.length,
-            bookedSeats:selectedSeats
-         })
-         selectedSeats.map((seat)=>{
-            showData.occupiedSeats[seat]=userId;
+    const { bookingId } = req.body;
 
-         })
-         showData.markModified('occupiedSeats');
-         await showData.save();
-          
-         res.json({success:true,message:"Booking created successfully",})
+    const booking =
+      await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.json({
+        success: false,
+        message: "Booking not found"
+      });
     }
-    catch(error){
-        console.error(error.message);
-        res.json({success:false,message:error.message})
+
+    if (booking.isPaid) {
+      return res.json({
+        success: false,
+        message: "Booking already paid"
+      });
     }
-}
+
+    const order =
+      await razorpay.orders.create({
+        amount: booking.amount * 100,
+        currency: "INR",
+        receipt: `receipt_${booking._id}`
+      });
+
+    booking.razorpayOrderId = order.id;
+
+    await booking.save();
+
+    return res.json({
+      success: true,
+      order
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    return res.json({
+      success: false,
+      message: error.message
+    });
+
+  }
+};
 export const getOccupiedSeats=async(req,res)=>{
     try{
         const {showId} = req.params;

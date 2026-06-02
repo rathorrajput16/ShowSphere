@@ -46,7 +46,78 @@ const {shows, axios, getToken, user, fetchFavoriteMovies, favoriteMovies, image_
     }
     
   }, [user])
+const handlePayNow = async (booking) => {
+  try {
 
+    const token = await getToken();
+
+    const { data } = await axios.post(
+      "/api/booking/pay-existing-booking",
+      {
+        bookingId: booking._id
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!data.success) {
+      return toast.error(data.message);
+    }
+
+    const order = data.order;
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: order.currency,
+      name: "ShowSphere",
+      description: "Movie Ticket Booking",
+      order_id: order.id,
+
+      handler: async function (response) {
+
+        const verifyRes = await axios.post(
+          "/api/booking/verify-payment",
+          {
+            bookingId: booking._id,
+
+            razorpay_order_id:
+              response.razorpay_order_id,
+
+            razorpay_payment_id:
+              response.razorpay_payment_id,
+
+            razorpay_signature:
+              response.razorpay_signature
+          },
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`
+            }
+          }
+        );
+
+        if (verifyRes.data.success) {
+          toast.success("Payment Successful");
+          await getMyBookings(); 
+            navigate("/my-bookings");
+        }
+      }
+    };
+
+    const razorpay =
+      new window.Razorpay(options);
+
+    razorpay.open();
+
+  } catch (error) {
+    toast.error(error.message);
+  }
+};
   return !isLoading ? (
     <div className='min-h-screen bg-black text-white px-6 md:px-16 lg:px-24 pt-28 pb-12'>
 
@@ -229,10 +300,12 @@ const {shows, axios, getToken, user, fetchFavoriteMovies, favoriteMovies, image_
                         </h2>
 
                         {!item.isPaid && (
-                          <button className='mt-4 bg-red-600 hover:bg-red-500 transition px-6 py-3 rounded-xl font-semibold'>
-                            Pay
-                            Now
-                          </button>
+                          <button
+  onClick={() => handlePayNow(item)}
+  className='mt-4 bg-red-600 hover:bg-red-500 transition px-6 py-3 rounded-xl font-semibold'
+>
+  Pay Now
+</button>
                         )}
                       </div>
 
