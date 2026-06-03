@@ -9,7 +9,26 @@ export const isAdmin=async(req,res)=>{
 export const getDashboardData=async(req,res)=>{
   try{
     const bookings=await Booking.find({isPaid:true});
-    const activeShows=await Show.find({showDateTime:{$gt:new Date()}}).populate("movie");
+    const activeShows = await Show.find({
+  showDateTime: { $gt: new Date() }
+}).populate("movie");
+
+for (const show of activeShows) {
+  const paidBookings = await Booking.find({
+    show: show._id,
+    isPaid: true,
+  });
+
+  show._doc.bookedSeats = paidBookings.reduce(
+    (acc, booking) => acc + booking.bookedSeats.length,
+    0
+  );
+
+  show._doc.earnings = paidBookings.reduce(
+    (acc, booking) => acc + booking.amount,
+    0
+  );
+}
      const totalUsers = await User.countDocuments();
 
         const dashboardData = {
