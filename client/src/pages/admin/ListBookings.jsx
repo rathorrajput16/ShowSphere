@@ -124,8 +124,9 @@ const {axios,getToken,user,image_base_url}=useAppContext();
                 (
                   item,
                   index
+                
                 ) => (
-
+                
                   <tr
                     key={
                       index
@@ -137,16 +138,14 @@ const {axios,getToken,user,image_base_url}=useAppContext();
                     <td className='p-5'>
 
                       <div>
+                        
                         <h3 className='text-white font-medium'>
-                          {
-                            item.user
-                              .name
-                          }
+                         {
+  item.user.name
+}
                         </h3>
 
-                        <p className='text-gray-400 text-sm'>
-                          Customer
-                        </p>
+                       
                       </div>
 
                     </td>
