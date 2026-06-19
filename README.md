@@ -65,7 +65,7 @@
 
 > **The core problem it solves:** Preventing double-booking in real time.
 >
-> ShowSphere uses an **optimistic seat-locking mechanism** — seats are locked in MongoDB the moment a user initiates payment. An **Inngest background job** then waits 10 minutes and automatically releases the seats if payment is not completed.
+> ShowSphere uses an **atomic seat reservation mechanism** — seats are locked in MongoDB the moment a user initiates payment. An **Inngest background job** then waits 10 minutes and automatically releases the seats if payment is not completed.
 
 ---
 
@@ -175,57 +175,80 @@
 
 ### 1. 💺 Seat Locking System
 
-This is the **most critical feature** of ShowSphere. The challenge: two users could select the same seat simultaneously. ShowSphere solves this with an **optimistic + timed lock strategy**.
+This is the **most critical feature** of ShowSphere. The challenge: two users could select the same seat simultaneously.ShowSphere solves this with an **atomic seat reservation and timed release strategy**.
 
-#### How the lock works step by step
 
-```
-User selects seats ─► clicks "Proceed to Pay"
+### How the reservation works step by step
+
+```text
+User selects seats → clicks "Proceed to Pay"
         │
         ▼
 POST /api/booking/create-order
         │
-        ├─ 1. checkSeatsAvailability()
-        │       Check Show.occupiedSeats map
-        │       If any seat already taken ─► return error immediately
+        ├─ 1. Atomic MongoDB seat reservation
+        │       updateOne(
+        │         { seat free },
+        │         { reserve seat }
+        │       )
         │
-        ├─ 2. Create Booking document  (isPaid: false)
+        │       If another user already reserved
+        │       the seat → request fails
         │
-        ├─ 3. LOCK SEATS in Show.occupiedSeats right now
-        │       { "A1": "userId", "B3": "userId" }
-        │       markModified("occupiedSeats") + save()
+        ├─ 2. Create Booking document
+        │       (isPaid: false)
         │
-        ├─ 4. Fire Inngest event "app/checkpayment"
-        │       Starts a 10-minute countdown in the background
+        ├─ 3. Trigger Inngest timeout workflow
         │
-        └─ 5. Create Razorpay order ─► return to frontend
+        ├─ 4. Create Razorpay order
+        │
+        └─ 5. Return order details to frontend
 ```
 
-#### Seat availability check
+
+#### Atomic seat reservation
 
 ```js
-// server/controllers/bookingController.js
-const checkSeatsAvailability = async (showId, selectedSeats) => {
-  const showData = await Show.findById(showId);
-  const occupiedSeats = showData.occupiedSeats;
-  // occupiedSeats is a plain Object: { "A1": "userId_xyz", "B4": "userId_abc" }
-  const isAnySeatTaken = selectedSeats.some(seat => occupiedSeats[seat]);
-  return !isAnySeatTaken;
-};
-```
+const query = { _id: showId };
+const update = {};
 
-#### Locking seats on order creation
-
-```js
-// Lock seats to the userId immediately
 selectedSeats.forEach((seat) => {
-  showData.occupiedSeats[seat] = userId;
+  query[`occupiedSeats.${seat}`] = { $exists: false };
+  update[`occupiedSeats.${seat}`] = userId;
 });
 
-showData.markModified("occupiedSeats"); // Required for Mongoose Mixed type
-await showData.save();
+const lockResult = await Show.updateOne(
+  query,
+  {
+    $set: update
+  }
+);
+
+if (lockResult.modifiedCount === 0) {
+  throw new Error("Seat already reserved");
+}
 ```
 
+#### Why this prevents double booking
+
+The seat availability check and seat reservation happen in a single MongoDB operation.
+
+```js
+Show.updateOne(
+  {
+    "occupiedSeats.A1": { $exists: false }
+  },
+  {
+    $set: {
+      "occupiedSeats.A1": userId
+    }
+  }
+)
+```
+
+If two users attempt to reserve the same seat simultaneously, MongoDB guarantees that only one update succeeds. The second request receives `modifiedCount = 0` and is rejected.
+
+This eliminates race conditions that occur when availability checks and seat updates are performed as separate operations.
 > **Why `markModified`?**
 > `occupiedSeats` is a `{ type: Object }` — a Mongoose "Mixed" type. Mongoose doesn't auto-detect nested object changes, so `markModified()` is called explicitly to force the save.
 
