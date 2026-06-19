@@ -29,50 +29,50 @@ export const createOrder = async (req, res) => {
     const { showId, selectedSeats } = req.body;
     const { userId } = req.auth();
 
-    const isAvailable =
-      await checkSeatsAvailability(
-        showId,
-        selectedSeats
-      );
+   // Atomic seat lock
+const query = { _id: showId };
+const update = {};
 
-    if (!isAvailable) {
-      return res.json({
-        success: false,
-        message: "Selected seats not available"
-      });
-    }
+selectedSeats.forEach((seat) => {
+  query[`occupiedSeats.${seat}`] = { $exists: false };
+  update[`occupiedSeats.${seat}`] = userId;
+});
 
-    const showData =
-      await Show.findById(showId);
+const lockResult = await Show.updateOne(
+  query,
+  {
+    $set: update
+  }
+);
 
-    if (!showData) {
-      return res.json({
-        success: false,
-        message: "Show not found"
-      });
-    }
+if (lockResult.modifiedCount === 0) {
+  return res.json({
+    success: false,
+    message: "One or more selected seats are already booked"
+  });
+}
 
-    const amount =
-      showData.showPrice *
-      selectedSeats.length;
+const showData = await Show.findById(showId);
 
-    // Create unpaid booking
-    const booking = await Booking.create({
-      user: userId,
-      show: showId,
-      amount,
-      bookedSeats: selectedSeats,
-      isPaid: false
-    });
+if (!showData) {
+  return res.json({
+    success: false,
+    message: "Show not found"
+  });
+}
 
-    // Lock seats immediately
-    selectedSeats.forEach((seat) => {
-      showData.occupiedSeats[seat] = userId;
-    });
+const amount =
+  showData.showPrice *
+  selectedSeats.length;
 
-    showData.markModified("occupiedSeats");
-
-    await showData.save();
+// Create unpaid booking
+const booking = await Booking.create({
+  user: userId,
+  show: showId,
+  amount,
+  bookedSeats: selectedSeats,
+  isPaid: false
+});
 
     // Trigger Inngest timer
     await inngest.send({
